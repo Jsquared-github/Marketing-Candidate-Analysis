@@ -1,5 +1,6 @@
 import pandas as pd
 from datetime import datetime, date
+import numpy
 
 raw = pd.read_csv('Data\marketing_campaign.csv', delimiter='\t')
 
@@ -13,16 +14,16 @@ def one_hot_encode(original_df, feature):
 
 
 def condense_education(df):
-    df.Education.loc[df['Education'] == 'Basic'] = 'High School'
-    df.Education.loc[df['Education'] == '2n Cycle'] = 'Master'
-    df.Education.loc[df['Education'] == 'Graduation'] = 'Bachelors'
+    df.loc[df.Education == 'Basic', 'Education'] = 'High School'
+    df.loc[df.Education == '2n Cycle', 'Education'] = 'Master'
+    df.loc[df.Education == 'Graduation', 'Education'] = 'Bachelors'
 
 
 def condesnse_marital_status(df):
-    df.Marital_Status.loc[df['Marital_Status'] == 'YOLO'] = 'Single'
-    df.Marital_Status.loc[df['Marital_Status'] == 'Absurd'] = 'Single'
-    df.Marital_Status.loc[df['Marital_Status'] == 'Alone'] = 'Single'
-    df.Marital_Status.loc[df['Marital_Status'] == 'Together'] = 'Dating'
+    df.loc[df.Marital_Status == 'YOLO', 'Marital_Status'] = 'Single'
+    df.loc[df.Marital_Status == 'Absurd', 'Marital_Status'] = 'Single'
+    df.loc[df.Marital_Status == 'Alone', 'Marital_Status'] = 'Single'
+    df.loc[df.Marital_Status == 'Together', 'Marital_Status'] = 'Dating'
 
 
 def drop_redundants(df):
@@ -45,3 +46,6 @@ def process_data(df):
 
 
 df = process_data(raw)
+
+for feature in df.columns:
+    print(feature, len(set(df[feature])))

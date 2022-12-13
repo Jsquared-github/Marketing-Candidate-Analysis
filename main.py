@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime, date
@@ -35,6 +35,14 @@ def impute_missing_data(df):
     df.Income = mean_imputer.fit_transform(df[['Income']])
 
 
+def remove_outliers(df, feature):
+    Q1 = df[feature].describe()[6]
+    Q3 = df[feature].describe()[4]
+    IQR = Q1 - Q3
+    df.drop(df[(df[feature] < (Q1 - 1.5 * IQR))].index, inplace=True)
+    df.drop(df[(df[feature] > (Q3 + 1.5 * IQR))].index, inplace=True)
+
+
 def drop_redundants(df):
     df.drop('Dt_Customer', axis=1, inplace=True)
     df.drop('Z_CostContact', axis=1, inplace=True)
@@ -48,6 +56,8 @@ def preprocess_data(df):
     trasform_education(df)
     trasform_marital_status(df)
     impute_missing_data(df)
+    remove_outliers(df, 'Income')
+    remove_outliers(df, 'Year_Birth')
     df = one_hot_encode(df, 'Marital_Status')
     drop_redundants(df)
 
@@ -55,4 +65,4 @@ def preprocess_data(df):
 
 
 df = preprocess_data(raw)
-print(df.describe())
+print(df)

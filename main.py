@@ -1,8 +1,9 @@
 import numpy
 import pandas as pd
-import matplotlib as mpl
+import matplotlib.pyplot as plt
 from datetime import datetime, date
 from sklearn.preprocessing import LabelEncoder
+from sklearn.impute import SimpleImputer
 
 raw = pd.read_csv('Data\marketing_campaign.csv', delimiter='\t')
 
@@ -29,6 +30,11 @@ def trasform_marital_status(df):
     df.loc[df.Marital_Status == 'Together', 'Marital_Status'] = 'Dating'
 
 
+def impute_missing_data(df):
+    mean_imputer = SimpleImputer(missing_values=pd.NA, strategy='mean')
+    df.Income = mean_imputer.fit_transform(df[['Income']])
+
+
 def drop_redundants(df):
     df.drop('Dt_Customer', axis=1, inplace=True)
     df.drop('Z_CostContact', axis=1, inplace=True)
@@ -37,15 +43,16 @@ def drop_redundants(df):
     df.drop('ID', axis=1, inplace=True)
 
 
-def process_data(df):
+def preprocess_data(df):
     df.Year_Birth = 2022 - df.Year_Birth
     trasform_education(df)
     trasform_marital_status(df)
+    impute_missing_data(df)
     df = one_hot_encode(df, 'Marital_Status')
     drop_redundants(df)
 
     return df
 
 
-df = process_data(raw)
-print(df)
+df = preprocess_data(raw)
+print(df.describe())

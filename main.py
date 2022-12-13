@@ -1,7 +1,7 @@
 import pandas as pd
 from datetime import datetime, date
 
-raw = pd.read_csv('C:/Users/2021j/Documents/Data/marketing_campaign.csv', delimiter='\t')
+raw = pd.read_csv('Data\marketing_campaign.csv', delimiter='\t')
 
 # Functions to Processes Data
 
@@ -41,7 +41,7 @@ def process_data(df):
     df = one_hot_encode(df, 'Marital_Status')
     drop_redundants(df)
 
-    print(df.info())
+    return df
 
 
-process_data(raw)
+df = process_data(raw)

@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import seaborn as sns
 import matplotlib.pyplot as plt
 from datetime import datetime, date
 from sklearn.preprocessing import LabelEncoder
@@ -8,26 +9,6 @@ from sklearn.impute import SimpleImputer
 raw = pd.read_csv('Data\marketing_campaign.csv', delimiter='\t')
 
 # Functions to Processes Data
-
-
-def one_hot_encode(original_df, feature):
-    encoded = pd.get_dummies(original_df[feature])
-    res = pd.concat([original_df, encoded], axis=1)
-    return (res)
-
-
-def trasform_education(df):
-    df.loc[df.Education == 'Basic', 'Education'] = 'High School'
-    df.loc[df.Education == '2n Cycle', 'Education'] = 'Master'
-    df.loc[df.Education == 'Graduation', 'Education'] = 'Bachelors'
-    df['Education'] = df['Education'].map({'High School': 0, 'Bachelors': 1, 'Master': 2, 'PhD': 3})
-
-
-def trasform_marital_status(df):
-    df.loc[df.Marital_Status == 'YOLO', 'Marital_Status'] = 'Single'
-    df.loc[df.Marital_Status == 'Absurd', 'Marital_Status'] = 'Single'
-    df.loc[df.Marital_Status == 'Alone', 'Marital_Status'] = 'Single'
-    df.loc[df.Marital_Status == 'Together', 'Marital_Status'] = 'Dating'
 
 
 def impute_missing_data(df):
@@ -39,8 +20,29 @@ def remove_outliers(df, feature):
     Q1 = df[feature].describe()[6]
     Q3 = df[feature].describe()[4]
     IQR = Q1 - Q3
-    df.drop(df[(df[feature] < (Q1 - 1.5 * IQR))].index, inplace=True)
-    df.drop(df[(df[feature] > (Q3 + 1.5 * IQR))].index, inplace=True)
+    df.drop(df[(df[feature] < (Q1 - 1.75 * IQR))].index, inplace=True)
+    df.drop(df[(df[feature] > (Q3 + 1.75 * IQR))].index, inplace=True)
+
+
+def transform_age(df):
+    df['Age'] = 2022 - df.Year_Birth
+
+
+def trasform_education(df):
+    df.loc[df.Education == 'Basic', 'Education'] = 'High School'
+    df.loc[df.Education == '2n Cycle', 'Education'] = 'Master'
+    df.loc[df.Education == 'Graduation', 'Education'] = 'Bachelors'
+    df['Education'] = df['Education'].map({'High School': 0, 'Bachelors': 1, 'Master': 2, 'PhD': 3})
+
+
+def combine_campaigns(df):
+    df['Campaigns_Accepted'] = df.AcceptedCmp1 + df.AcceptedCmp2 + df.AcceptedCmp3 + df.AcceptedCmp4 + df.AcceptedCmp5 + df.Response
+
+
+def get_family_size(df):
+    df['Marital_Status'] = df['Marital_Status'].map(
+        {'YOLO': 1, 'Absurd': 1, 'Alone': 1, 'Single': 1, 'Widow': 1, 'Divorced': 1, 'Together': 2, 'Married': 2})
+    df['Family_Size'] = df.Marital_Status + df.Kidhome + df.Teenhome
 
 
 def drop_redundants(df):
@@ -49,20 +51,30 @@ def drop_redundants(df):
     df.drop('Z_Revenue', axis=1, inplace=True)
     df.drop('Marital_Status', axis=1, inplace=True)
     df.drop('ID', axis=1, inplace=True)
+    df.drop('Year_Birth', axis=1, inplace=True)
+    df.drop('AcceptedCmp1', axis=1, inplace=True)
+    df.drop('AcceptedCmp2', axis=1, inplace=True)
+    df.drop('AcceptedCmp3', axis=1, inplace=True)
+    df.drop('AcceptedCmp4', axis=1, inplace=True)
+    df.drop('AcceptedCmp5', axis=1, inplace=True)
+    df.drop('Response', axis=1, inplace=True)
+    df.drop('Kidhome', axis=1, inplace=True)
+    df.drop('Teenhome', axis=1, inplace=True)
 
 
 def preprocess_data(df):
-    df.Year_Birth = 2022 - df.Year_Birth
-    trasform_education(df)
-    trasform_marital_status(df)
     impute_missing_data(df)
     remove_outliers(df, 'Income')
     remove_outliers(df, 'Year_Birth')
-    df = one_hot_encode(df, 'Marital_Status')
+    transform_age(df)
+    trasform_education(df)
+    combine_campaigns(df)
+    get_family_size(df)
     drop_redundants(df)
 
     return df
 
 
 df = preprocess_data(raw)
-print(df)
+df.hist()
+plt.show()

@@ -3,7 +3,6 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from datetime import datetime, date
-from sklearn.preprocessing import LabelEncoder
 from sklearn.impute import SimpleImputer
 
 raw = pd.read_csv('Data\marketing_campaign.csv', delimiter='\t')
@@ -75,6 +74,20 @@ def preprocess_data(df):
     return df
 
 
+def standardize_numericals(df):
+    num_df = df[df.columns.difference(['Education', 'Complain', 'Campaigns_Accepted'])]
+    num_df = num_df.apply(lambda x: ((x - x.mean()) / x.std()).round(2))
+    return pd.concat(objs=[num_df, df['Education'], df['Complain'], df['Campaigns_Accepted']], axis=1)
+
+# Data Visualizations
+
+
+def histogram(df):
+    df.hist()
+    plt.show()
+
+
 df = preprocess_data(raw)
-df.hist()
-plt.show()
+stand_df = standardize_numericals(df)
+print(stand_df)
+# histogram(df)

@@ -87,7 +87,12 @@ def histogram(df):
     plt.show()
 
 
+def correlation_heatmap(df):
+    sns.heatmap(df.corr())
+    plt.show()
+
+
 df = preprocess_data(raw)
 stand_df = standardize_numericals(df)
-print(stand_df)
-# histogram(df)
+print()
+correlation_heatmap(stand_df)

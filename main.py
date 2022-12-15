@@ -120,8 +120,13 @@ def scree_plot(pca):
     plt.show()
 
 
+def get_loading_scores(pca_df, pca):
+    features = ['Feature' + str(x) for x in range(1, len(pca_df.columns) + 1)]
+    loading_scores = pd.DataFrame(pca.components_, index=features).apply(lambda x: abs(x))
+    return loading_scores
+
+
 df = preprocess_data(raw)
 stand_nums = remove_categorical(standardize_numericals(df))
 pca = principal_component_analysis(stand_nums)
-scree_plot(pca)
-# correlation_heatmap(stand_df)
+print(get_loading_scores(stand_nums, pca))

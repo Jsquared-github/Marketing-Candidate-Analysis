@@ -4,6 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from datetime import datetime, date
 from sklearn.impute import SimpleImputer
+from sklearn.decomposition import PCA
 
 raw = pd.read_csv('Data\marketing_data.csv', delimiter='\t')
 
@@ -75,11 +76,20 @@ def preprocess_data(df):
 
 
 def standardize_numericals(df):
-    num_df = df[df.columns.difference(['Education', 'Complain', 'Campaigns_Accepted'])]
+    num_df = remove_categorical(df)
     num_df = num_df.apply(lambda x: ((x - x.mean()) / x.std()).round(2))
+    return concat_categorical(df, num_df)
+
+
+def remove_categorical(df):
+    return df[df.columns.difference(['Education', 'Complain', 'Campaigns_Accepted'])]
+
+
+def concat_categorical(df, num_df):
     return pd.concat(objs=[num_df, df['Education'], df['Complain'], df['Campaigns_Accepted']], axis=1)
 
-# Data Visualizations
+
+# Data Visualizations and Transformations
 
 
 def histogram(df):
@@ -87,12 +97,31 @@ def histogram(df):
     plt.show()
 
 
+def principal_component_analysis(df):
+    pca = PCA()
+    pca.fit(stand_nums)
+    pca.transform(stand_nums)
+    return pca
+
+
 def correlation_heatmap(df):
     sns.heatmap(df.corr())
     plt.show()
 
 
+def scree_plot(pca):
+    per_var = np.round(pca.explained_variance_ratio_ * 100, decimals=2)
+    labels = ['PC' + str(x) for x in range(1, len(per_var) + 1)]
+    print(per_var)
+    print(labels)
+    plt.bar(x=range(1, len(per_var) + 1), height=per_var, tick_label=labels)
+    plt.ylabel('% of Explained Variance')
+    plt.xlabel('Principal Components')
+    plt.show()
+
+
 df = preprocess_data(raw)
-stand_df = standardize_numericals(df)
-print(stand_df.describe())
-correlation_heatmap(stand_df)
+stand_nums = remove_categorical(standardize_numericals(df))
+pca = principal_component_analysis(stand_nums)
+scree_plot(pca)
+# correlation_heatmap(stand_df)

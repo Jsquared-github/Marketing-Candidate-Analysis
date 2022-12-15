@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime, date
 from sklearn.impute import SimpleImputer
 
-raw = pd.read_csv('Data\marketing_campaign.csv', delimiter='\t')
+raw = pd.read_csv('Data\marketing_data.csv', delimiter='\t')
 
 # Functions to Processes Data
 
@@ -94,5 +94,5 @@ def correlation_heatmap(df):
 
 df = preprocess_data(raw)
 stand_df = standardize_numericals(df)
-print()
+print(stand_df.describe())
 correlation_heatmap(stand_df)

@@ -164,9 +164,10 @@ def get_eigen_vectors(pca_df, pca):
 def k_means(df, clusters):
     kmeans = cluster.KMeans(n_clusters=clusters, random_state=39, n_init='auto')
     kmeans.fit(df)
-    if len(df.columns) == 2:
+    dim = len(df.columns)
+    if dim == 2:
         pca_plot_2D(df, kmeans.labels_)
-    elif len(df.columns) == 3:
+    elif dim == 3:
         pca_plot_3D(df, kmeans.labels_)
 
 
@@ -189,4 +190,4 @@ def get_eigen_values(pca):
 df = preprocess_data(raw)
 stand_nums = remove_categorical(standardize_numericals(df))
 (pca, pca_df) = principal_component_analysis(stand_nums, 3)
-k_means(pca_df, 4)
+k_means(pca_df, 3)

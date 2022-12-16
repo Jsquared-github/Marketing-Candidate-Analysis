@@ -3,6 +3,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from datetime import datetime, date
+from sklearn import cluster
 from sklearn.impute import SimpleImputer
 from sklearn.decomposition import PCA
 
@@ -97,11 +98,12 @@ def histogram(df):
     plt.show()
 
 
-def principal_component_analysis(df):
-    pca = PCA()
+def principal_component_analysis(df, components):
+    pca = PCA(n_components=components)
     pca.fit(stand_nums)
-    pca.transform(stand_nums)
-    return pca
+    pca_df = pca.transform(stand_nums)
+    pca_df = pd.DataFrame(pca_df)
+    return (pca, pca_df)
 
 
 def correlation_heatmap(df):
@@ -109,11 +111,44 @@ def correlation_heatmap(df):
     plt.show()
 
 
+def pca_plot_2D(pca, target):
+    Xax = pca[0]
+    Yax = pca[1]
+    labels = {0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5'}
+    cdict = {0: 'purple', 1: 'blue', 2: 'green', 3: 'yellow', 4: 'orange', 5: 'red'}
+    alpha = {0: .1, 1: .3, 2: .75, 3: 1, 4: 1, 5: 1}
+    for l in np.unique(target):
+        indxs = np.where(target == l)
+        for ix in indxs:
+            plt.scatter(Xax[ix], Yax[ix], c=cdict[l], label=labels[l], alpha=alpha[l])
+    plt.legend()
+    plt.xlabel('PC1')
+    plt.ylabel('PC2')
+    plt.show()
+
+
+def pca_plot_3D(pca, target):
+    fig = plt.figure(figsize=(7, 7))
+    ax = fig.add_subplot(projection='3d')
+    plt.xlabel('PC1')
+    plt.ylabel('PC2')
+    Xax = pca[0]
+    Yax = pca[1]
+    Zax = pca[2]
+    labels = {0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5'}
+    cdict = {0: 'purple', 1: 'blue', 2: 'green', 3: 'yellow', 4: 'orange', 5: 'red'}
+    alpha = {0: .2, 1: .2, 2: .2, 3: .4, 4: .4, 5: .6}
+    for l in np.unique(target):
+        indxs = np.where(target == l)
+        for ix in indxs:
+            ax.scatter(Xax[ix], Yax[ix], Zax[ix], c=cdict[l], label=labels[l], alpha=alpha[l])
+    plt.legend()
+    plt.show()
+
+
 def scree_plot(pca):
     per_var = np.round(pca.explained_variance_ratio_ * 100, decimals=2)
     labels = ['PC' + str(x) for x in range(1, len(per_var) + 1)]
-    print(per_var)
-    print(labels)
     plt.bar(x=range(1, len(per_var) + 1), height=per_var, tick_label=labels)
     plt.ylabel('% of Explained Variance')
     plt.xlabel('Principal Components')
@@ -126,10 +161,32 @@ def get_eigen_vectors(pca_df, pca):
     return loading_scores
 
 
+def k_means(df, clusters):
+    kmeans = cluster.KMeans(n_clusters=clusters, random_state=39, n_init='auto')
+    kmeans.fit(df)
+    if len(df.columns) == 2:
+        pca_plot_2D(df, kmeans.labels_)
+    elif len(df.columns) == 3:
+        pca_plot_3D(df, kmeans.labels_)
+
+
+def elbow_plot(df, iterations):
+    SSE = []
+    ks = []
+    for k in range(1, iterations + 1):
+        kmeans = cluster.KMeans(n_clusters=k, random_state=39, n_init='auto')
+        kmeans.fit(df)
+        SSE.append(kmeans.inertia_)
+        ks.append(k)
+    plt.plot(ks, SSE)
+    plt.show()
+
+
 def get_eigen_values(pca):
     return pca.explained_variance_
 
 
 df = preprocess_data(raw)
 stand_nums = remove_categorical(standardize_numericals(df))
-pca = principal_component_analysis(stand_nums)
+(pca, pca_df) = principal_component_analysis(stand_nums, 3)
+k_means(pca_df, 4)

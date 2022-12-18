@@ -3,9 +3,10 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from datetime import datetime, date
-from sklearn import cluster
+from sklearn import cluster, preprocessing
 from sklearn.impute import SimpleImputer
 from sklearn.decomposition import PCA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 raw = pd.read_csv('Data\marketing_data.csv', delimiter='\t')
 
@@ -76,21 +77,55 @@ def preprocess_data(df):
     return df
 
 
-def standardize_numericals(df):
-    num_df = remove_categorical(df)
-    num_df = num_df.apply(lambda x: ((x - x.mean()) / x.std()).round(2))
-    return concat_categorical(df, num_df)
+def remove_features(df, features: list):
+    return (df[df.columns.difference(features)])
 
 
 def remove_categorical(df):
     return df[df.columns.difference(['Education', 'Complain', 'Campaigns_Accepted'])]
 
 
-def concat_categorical(df, num_df):
-    return pd.concat(objs=[num_df, df['Education'], df['Complain'], df['Campaigns_Accepted']], axis=1)
+def concat_features(non_concat_df, df_to_concat, features: list):
+    non_concat_df.reset_index(drop=True, inplace=True)
+    df_to_concat.reset_index(drop=True, inplace=True)
+    for feature in features:
+        non_cat_df = pd.concat(objs=[non_concat_df, df_to_concat[feature]], axis=1, copy=False)
+    return non_cat_df
+
+
+def concat_categorical(df, non_cat_df):
+    df.reset_index(drop=True, inplace=True)
+    non_cat_df.reset_index(drop=True, inplace=True)
+    return pd.concat(objs=[num_df, df['Education'], df['Complain'], df['Campaigns_Accepted']], axis=1, copy=False)
 
 
 # Data Visualizations and Transformations
+
+def standardize(df):
+    num_df = df.apply(lambda x: ((x - x.mean()) / x.std()).round(2))
+    return num_df
+
+
+def power_transform(df):
+    pt = preprocessing.PowerTransformer(standardize=True, copy=False)
+    pt_df = pt.fit_transform(df)
+    return pd.DataFrame(pt_df, columns=pt.feature_names_in_)
+
+
+def principal_component_analysis(df, components):
+    pca = PCA(n_components=components)
+    pca.fit(stand_nums)
+    pca_df = pd.DataFrame(pca.transform(stand_nums))
+    return (pca, pca_df)
+
+
+def linear_discriminant_analysis(df, target, components):
+    lda = LinearDiscriminantAnalysis(n_components=components)
+    lda_df = pd.DataFrame(lda.fit_transform(X=df, y=target))
+    if components == 2:
+        scatter_2D(lda_df, target)
+    elif components == 3:
+        scatter_3D(lda_df, target)
 
 
 def histogram(df):
@@ -98,43 +133,31 @@ def histogram(df):
     plt.show()
 
 
-def principal_component_analysis(df, components):
-    pca = PCA(n_components=components)
-    pca.fit(stand_nums)
-    pca_df = pca.transform(stand_nums)
-    pca_df = pd.DataFrame(pca_df)
-    return (pca, pca_df)
-
-
 def correlation_heatmap(df):
     sns.heatmap(df.corr())
     plt.show()
 
 
-def pca_plot_2D(pca, target):
-    Xax = pca[0]
-    Yax = pca[1]
+def scatter_2D(df, target):
+    Xax = df[0]
+    Yax = df[1]
     labels = {0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5'}
     cdict = {0: 'purple', 1: 'blue', 2: 'green', 3: 'yellow', 4: 'orange', 5: 'red'}
-    alpha = {0: .1, 1: .3, 2: .75, 3: 1, 4: 1, 5: 1}
+    alpha = {0: .2, 1: .2, 2: .2, 3: .4, 4: .4, 5: .6}
     for l in np.unique(target):
         indxs = np.where(target == l)
         for ix in indxs:
             plt.scatter(Xax[ix], Yax[ix], c=cdict[l], label=labels[l], alpha=alpha[l])
     plt.legend()
-    plt.xlabel('PC1')
-    plt.ylabel('PC2')
     plt.show()
 
 
-def pca_plot_3D(pca, target):
+def scatter_3D(df, target):
     fig = plt.figure(figsize=(7, 7))
     ax = fig.add_subplot(projection='3d')
-    plt.xlabel('PC1')
-    plt.ylabel('PC2')
-    Xax = pca[0]
-    Yax = pca[1]
-    Zax = pca[2]
+    Xax = df[0]
+    Yax = df[1]
+    Zax = df[2]
     labels = {0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5'}
     cdict = {0: 'purple', 1: 'blue', 2: 'green', 3: 'yellow', 4: 'orange', 5: 'red'}
     alpha = {0: .2, 1: .2, 2: .2, 3: .4, 4: .4, 5: .6}
@@ -155,10 +178,14 @@ def scree_plot(pca):
     plt.show()
 
 
-def get_eigen_vectors(pca_df, pca):
+def pca_eigen_vectors(pca_df, pca):
     features = ['Feature' + str(x) for x in range(1, len(pca_df.columns) + 1)]
     loading_scores = pd.DataFrame(pca.components_, index=features).apply(lambda x: abs(x))
     return loading_scores
+
+
+def pca_eigen_values(pca):
+    return pca.explained_variance_
 
 
 def k_means(df, clusters):
@@ -166,9 +193,9 @@ def k_means(df, clusters):
     kmeans.fit(df)
     dim = len(df.columns)
     if dim == 2:
-        pca_plot_2D(df, kmeans.labels_)
+        scatter_2D(df, kmeans.labels_)
     elif dim == 3:
-        pca_plot_3D(df, kmeans.labels_)
+        scatter_3D(df, kmeans.labels_)
 
 
 def elbow_plot(df, iterations):
@@ -183,11 +210,9 @@ def elbow_plot(df, iterations):
     plt.show()
 
 
-def get_eigen_values(pca):
-    return pca.explained_variance_
-
-
 df = preprocess_data(raw)
-stand_nums = remove_categorical(standardize_numericals(df))
+non_cat_df = remove_categorical(df)
+stand_nums = standardize(non_cat_df)
+stand_gauss_df = concat_features(power_transform(remove_features(non_cat_df, ['Recency'])), stand_nums, ['Recency'])
 (pca, pca_df) = principal_component_analysis(stand_nums, 3)
-k_means(pca_df, 3)
+linear_discriminant_analysis(stand_gauss_df, df['Campaigns_Accepted'], 3)

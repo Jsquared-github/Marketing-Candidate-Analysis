@@ -119,13 +119,14 @@ def principal_component_analysis(df, components):
     return (pca, pca_df)
 
 
-def linear_discriminant_analysis(df, target, components):
+def linear_discriminant_analysis(df, target, components, plot: bool):
     lda = LinearDiscriminantAnalysis(n_components=components)
     lda_df = pd.DataFrame(lda.fit_transform(X=df, y=target))
-    if components == 2:
+    if components == 2 and plot:
         scatter_2D(lda_df, target)
-    elif components == 3:
+    elif components == 3 and plot:
         scatter_3D(lda_df, target)
+    return lda_df
 
 
 def histogram(df):
@@ -215,4 +216,4 @@ non_cat_df = remove_categorical(df)
 stand_nums = standardize(non_cat_df)
 stand_gauss_df = concat_features(power_transform(remove_features(non_cat_df, ['Recency'])), stand_nums, ['Recency'])
 (pca, pca_df) = principal_component_analysis(stand_nums, 3)
-linear_discriminant_analysis(stand_gauss_df, df['Campaigns_Accepted'], 3)
+lda_df = linear_discriminant_analysis(stand_gauss_df, df['Campaigns_Accepted'], 3, False)

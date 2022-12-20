@@ -4,6 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from datetime import datetime, date
 from sklearn import cluster, preprocessing
+from sklearn.metrics import silhouette_score
 from sklearn.impute import SimpleImputer
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -112,10 +113,14 @@ def power_transform(df):
     return pd.DataFrame(pt_df, columns=pt.feature_names_in_)
 
 
-def principal_component_analysis(df, components):
+def principal_component_analysis(df, target, components, plot: bool):
     pca = PCA(n_components=components)
     pca.fit(stand_nums)
     pca_df = pd.DataFrame(pca.transform(stand_nums))
+    if components == 2 and plot:
+        scatter_2D(pca_df, target)
+    elif components == 3 and plot:
+        scatter_3D(pca_df, target)
     return (pca, pca_df)
 
 
@@ -202,12 +207,31 @@ def k_means(df, clusters):
 def elbow_plot(df, iterations):
     SSE = []
     ks = []
-    for k in range(1, iterations + 1):
-        kmeans = cluster.KMeans(n_clusters=k, random_state=39, n_init='auto')
-        kmeans.fit(df)
+    for k in range(2, iterations + 1):
+        kmeans = cluster.KMeans(n_clusters=k, random_state=39, n_init='auto').fit(df)
         SSE.append(kmeans.inertia_)
         ks.append(k)
-    plt.plot(ks, SSE)
+    return ks, SSE
+
+
+def silhouette_plot(df, iterations):
+    sils = []
+    ks = []
+    for k in range(2, iterations + 1):
+        kmeans = cluster.KMeans(n_clusters=k, random_state=39, n_init='auto').fit(df)
+        sils.append(silhouette_score(df, kmeans.labels_))
+        ks.append(k)
+    return (ks, sils)
+
+
+def optimal_k_plot(df, iterations):
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    (elb_ks, SSE) = elbow_plot(df, iterations)
+    ax1.plot(elb_ks, SSE)
+    ax1.set_title('Elbow Plot')
+    (sil_ks, sils) = silhouette_plot(df, iterations)
+    ax2.plot(sil_ks, sils)
+    ax2.set_title('Silhouette Plot')
     plt.show()
 
 
@@ -215,5 +239,9 @@ df = preprocess_data(raw)
 non_cat_df = remove_categorical(df)
 stand_nums = standardize(non_cat_df)
 stand_gauss_df = concat_features(power_transform(remove_features(non_cat_df, ['Recency'])), stand_nums, ['Recency'])
-(pca, pca_df) = principal_component_analysis(stand_nums, 3)
-lda_df = linear_discriminant_analysis(stand_gauss_df, df['Campaigns_Accepted'], 3, False)
+(pca, pca_df) = principal_component_analysis(stand_nums, df['Campaigns_Accepted'], 3, True)
+k_means(pca_df, 4)
+k_means(pca_df, 5)
+lda_df = linear_discriminant_analysis(stand_gauss_df, df['Campaigns_Accepted'], 3, True)
+k_means(lda_df, 4)
+k_means(lda_df, 6)

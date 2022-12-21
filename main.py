@@ -7,6 +7,7 @@ from sklearn import cluster, preprocessing
 from sklearn.metrics import silhouette_score
 from sklearn.impute import SimpleImputer
 from sklearn.decomposition import PCA
+from sklearn_extra.cluster import KMedoids
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 raw = pd.read_csv('Data\marketing_data.csv', delimiter='\t')
@@ -195,8 +196,7 @@ def pca_eigen_values(pca):
 
 
 def k_means(df, clusters):
-    kmeans = cluster.KMeans(n_clusters=clusters, random_state=39, n_init='auto')
-    kmeans.fit(df)
+    kmeans = cluster.KMeans(n_clusters=clusters, random_state=39, n_init='auto').fit(df)
     dim = len(df.columns)
     if dim == 2:
         scatter_2D(df, kmeans.labels_)
@@ -204,32 +204,53 @@ def k_means(df, clusters):
         scatter_3D(df, kmeans.labels_)
 
 
-def elbow_plot(df, iterations):
+def k_mediods(df, clusters):
+    kmeds = KMedoids(n_clusters=clusters, init='random', random_state=39).fit(df)
+    dim = len(df.columns)
+    if dim == 2:
+        scatter_2D(df, kmeds.labels_)
+    elif dim == 3:
+        scatter_3D(df, kmeds.labels_)
+
+
+def elbow_plot(df, iterations, method: str):
     SSE = []
     ks = []
-    for k in range(2, iterations + 1):
-        kmeans = cluster.KMeans(n_clusters=k, random_state=39, n_init='auto').fit(df)
-        SSE.append(kmeans.inertia_)
-        ks.append(k)
+    if method == 'kmeans':
+        for k in range(2, iterations + 1):
+            kmeans = cluster.KMeans(n_clusters=k, random_state=39, n_init='auto').fit(df)
+            SSE.append(kmeans.inertia_)
+            ks.append(k)
+    elif method == 'kmedoids':
+        for k in range(2, iterations + 1):
+            kmeds = KMedoids(n_clusters=k, init='random', random_state=39).fit(df)
+            SSE.append(kmeds.inertia_)
+            ks.append(k)
     return ks, SSE
 
 
-def silhouette_plot(df, iterations):
+def silhouette_plot(df, iterations, method: str):
     sils = []
     ks = []
-    for k in range(2, iterations + 1):
-        kmeans = cluster.KMeans(n_clusters=k, random_state=39, n_init='auto').fit(df)
-        sils.append(silhouette_score(df, kmeans.labels_))
-        ks.append(k)
+    if method == 'kmeans':
+        for k in range(2, iterations + 1):
+            kmeans = cluster.KMeans(n_clusters=k, random_state=39, n_init='auto').fit(df)
+            sils.append(silhouette_score(df, kmeans.labels_))
+            ks.append(k)
+    elif method == 'kmedoids':
+        for k in range(2, iterations + 1):
+            kmeds = KMedoids(n_clusters=k, init='random', random_state=39).fit(df)
+            sils.append(silhouette_score(df, kmeds.labels_))
+            ks.append(k)
     return (ks, sils)
 
 
-def optimal_k_plot(df, iterations):
+def optimal_k(df, iterations, method: str):
     fig, (ax1, ax2) = plt.subplots(1, 2)
-    (elb_ks, SSE) = elbow_plot(df, iterations)
+    (elb_ks, SSE) = elbow_plot(df, iterations, method)
     ax1.plot(elb_ks, SSE)
     ax1.set_title('Elbow Plot')
-    (sil_ks, sils) = silhouette_plot(df, iterations)
+    (sil_ks, sils) = silhouette_plot(df, iterations, method)
     ax2.plot(sil_ks, sils)
     ax2.set_title('Silhouette Plot')
     plt.show()
@@ -239,9 +260,11 @@ df = preprocess_data(raw)
 non_cat_df = remove_categorical(df)
 stand_nums = standardize(non_cat_df)
 stand_gauss_df = concat_features(power_transform(remove_features(non_cat_df, ['Recency'])), stand_nums, ['Recency'])
-(pca, pca_df) = principal_component_analysis(stand_nums, df['Campaigns_Accepted'], 3, True)
-k_means(pca_df, 4)
-k_means(pca_df, 5)
-lda_df = linear_discriminant_analysis(stand_gauss_df, df['Campaigns_Accepted'], 3, True)
-k_means(lda_df, 4)
-k_means(lda_df, 6)
+(pca, pca_df) = principal_component_analysis(stand_nums, df['Campaigns_Accepted'], 3, False)
+optimal_k(pca_df, 10, 'kmedoids')
+# k_means(pca_df, 4)
+# k_medoids(pca_df, 4)
+lda_df = linear_discriminant_analysis(stand_gauss_df, df['Campaigns_Accepted'], 3, False)
+optimal_k(lda_df, 10, 'kmedoids')
+# k_means(lda_df, 6)
+# k_medoids(lda_df, 5)

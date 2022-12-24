@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime, date
 from sklearn import cluster, preprocessing
 from sklearn.metrics import silhouette_score
+from sklearn.manifold import TSNE
 from sklearn.impute import SimpleImputer
 from sklearn.decomposition import PCA
 from sklearn_extra.cluster import KMedoids
@@ -135,6 +136,16 @@ def linear_discriminant_analysis(df, target, components, plot: bool):
     return lda_df
 
 
+def t_SNE(df, target, components, plot: bool):
+    t_SNE = TSNE(n_components=components, perplexity=47.5, n_iter=2500, random_state=39)
+    t_SNE_df = pd.DataFrame(t_SNE.fit_transform(df))
+    if components == 2 and plot:
+        scatter_2D(t_SNE_df, target)
+    elif components == 3 and plot:
+        scatter_3D(t_SNE_df, target)
+    return t_SNE_df
+
+
 def histogram(df):
     df.hist()
     plt.show()
@@ -148,9 +159,9 @@ def correlation_heatmap(df):
 def scatter_2D(df, target):
     Xax = df[0]
     Yax = df[1]
-    labels = {0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5'}
-    cdict = {0: 'purple', 1: 'blue', 2: 'green', 3: 'yellow', 4: 'orange', 5: 'red'}
-    alpha = {0: .2, 1: .2, 2: .2, 3: .4, 4: .4, 5: .6}
+    labels = {0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7'}
+    cdict = {0: 'purple', 1: 'blue', 2: 'darkgreen', 3: 'yellow', 4: 'orange', 5: 'red', 6: 'pink', 7: 'brown'}
+    alpha = {0: .2, 1: .2, 2: .4, 3: .4, 4: .4, 5: .6, 6: .6, 7: .8}
     for l in np.unique(target):
         indxs = np.where(target == l)
         for ix in indxs:
@@ -165,9 +176,9 @@ def scatter_3D(df, target):
     Xax = df[0]
     Yax = df[1]
     Zax = df[2]
-    labels = {0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5'}
-    cdict = {0: 'purple', 1: 'blue', 2: 'green', 3: 'yellow', 4: 'orange', 5: 'red'}
-    alpha = {0: .2, 1: .2, 2: .2, 3: .4, 4: .4, 5: .6}
+    labels = {0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7'}
+    cdict = {0: 'purple', 1: 'blue', 2: 'darkgreen', 3: 'yellow', 4: 'orange', 5: 'red', 6: 'pink', 7: 'brown'}
+    alpha = {0: .2, 1: .2, 2: .4, 3: .4, 4: .4, 5: .6, 6: .6, 7: .8}
     for l in np.unique(target):
         indxs = np.where(target == l)
         for ix in indxs:
@@ -204,7 +215,7 @@ def k_means(df, clusters):
         scatter_3D(df, kmeans.labels_)
 
 
-def k_mediods(df, clusters):
+def k_medoids(df, clusters):
     kmeds = KMedoids(n_clusters=clusters, init='random', random_state=39).fit(df)
     dim = len(df.columns)
     if dim == 2:
@@ -260,11 +271,13 @@ df = preprocess_data(raw)
 non_cat_df = remove_categorical(df)
 stand_nums = standardize(non_cat_df)
 stand_gauss_df = concat_features(power_transform(remove_features(non_cat_df, ['Recency'])), stand_nums, ['Recency'])
-(pca, pca_df) = principal_component_analysis(stand_nums, df['Campaigns_Accepted'], 3, False)
-optimal_k(pca_df, 10, 'kmedoids')
+#pca_df = principal_component_analysis(stand_nums, df['Campaigns_Accepted'], 3, False)
 # k_means(pca_df, 4)
 # k_medoids(pca_df, 4)
-lda_df = linear_discriminant_analysis(stand_gauss_df, df['Campaigns_Accepted'], 3, False)
-optimal_k(lda_df, 10, 'kmedoids')
+#lda_df = linear_discriminant_analysis(stand_gauss_df, df['Campaigns_Accepted'], 3, False)
 # k_means(lda_df, 6)
 # k_medoids(lda_df, 5)
+
+t_SNE_df = t_SNE(stand_nums, df['Campaigns_Accepted'], 3, True)
+k_means(t_SNE_df, 5)
+k_medoids(t_SNE_df, 7)

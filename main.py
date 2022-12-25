@@ -133,17 +133,17 @@ def linear_discriminant_analysis(df, target, components, plot: bool):
         scatter_2D(lda_df, target)
     elif components == 3 and plot:
         scatter_3D(lda_df, target)
-    return lda_df
+    return (lda, lda_df)
 
 
 def t_SNE(df, target, components, plot: bool):
-    t_SNE = TSNE(n_components=components, perplexity=47.5, n_iter=2500, random_state=39)
+    t_SNE = TSNE(n_components=components, perplexity=47.5, n_iter=1500, random_state=39)
     t_SNE_df = pd.DataFrame(t_SNE.fit_transform(df))
     if components == 2 and plot:
         scatter_2D(t_SNE_df, target)
     elif components == 3 and plot:
         scatter_3D(t_SNE_df, target)
-    return t_SNE_df
+    return (t_SNE, t_SNE_df)
 
 
 def histogram(df):
@@ -271,13 +271,15 @@ df = preprocess_data(raw)
 non_cat_df = remove_categorical(df)
 stand_nums = standardize(non_cat_df)
 stand_gauss_df = concat_features(power_transform(remove_features(non_cat_df, ['Recency'])), stand_nums, ['Recency'])
-#pca_df = principal_component_analysis(stand_nums, df['Campaigns_Accepted'], 3, False)
-# k_means(pca_df, 4)
-# k_medoids(pca_df, 4)
-#lda_df = linear_discriminant_analysis(stand_gauss_df, df['Campaigns_Accepted'], 3, False)
-# k_means(lda_df, 6)
-# k_medoids(lda_df, 5)
 
-t_SNE_df = t_SNE(stand_nums, df['Campaigns_Accepted'], 3, True)
+(pca, pca_df) = principal_component_analysis(stand_nums, df['Campaigns_Accepted'], 3, True)
+k_means(pca_df, 4)
+k_medoids(pca_df, 4)
+
+(lda, lda_df) = linear_discriminant_analysis(stand_gauss_df, df['Campaigns_Accepted'], 3, True)
+k_means(lda_df, 6)
+k_medoids(lda_df, 5)
+
+(t_SNE, t_SNE_df) = t_SNE(stand_nums, df['Campaigns_Accepted'], 3, True)
 k_means(t_SNE_df, 5)
 k_medoids(t_SNE_df, 7)

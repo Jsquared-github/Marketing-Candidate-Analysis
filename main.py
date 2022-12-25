@@ -137,7 +137,7 @@ def linear_discriminant_analysis(df, target, components, plot: bool):
 
 
 def t_SNE(df, target, components, plot: bool):
-    t_SNE = TSNE(n_components=components, perplexity=47.5, n_iter=1500, random_state=39)
+    t_SNE = TSNE(n_components=components, perplexity=47.5, n_iter=1750, random_state=39)
     t_SNE_df = pd.DataFrame(t_SNE.fit_transform(df))
     if components == 2 and plot:
         scatter_2D(t_SNE_df, target)

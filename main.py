@@ -117,8 +117,8 @@ def power_transform(df):
 
 def principal_component_analysis(df, target, components, plot: bool):
     pca = PCA(n_components=components)
-    pca.fit(stand_nums)
-    pca_df = pd.DataFrame(pca.transform(stand_nums))
+    pca.fit(df)
+    pca_df = pd.DataFrame(pca.transform(df))
     if components == 2 and plot:
         scatter_2D(pca_df, target)
     elif components == 3 and plot:
@@ -206,22 +206,24 @@ def pca_eigen_values(pca):
     return pca.explained_variance_
 
 
-def k_means(df, clusters):
+def k_means(df, clusters, plot: bool):
     kmeans = cluster.KMeans(n_clusters=clusters, random_state=39, n_init='auto').fit(df)
     dim = len(df.columns)
-    if dim == 2:
+    if dim == 2 and plot:
         scatter_2D(df, kmeans.labels_)
-    elif dim == 3:
+    elif dim == 3 and plot:
         scatter_3D(df, kmeans.labels_)
+    return kmeans.labels_
 
 
-def k_medoids(df, clusters):
+def k_medoids(df, clusters, plot: bool):
     kmeds = KMedoids(n_clusters=clusters, init='random', random_state=39).fit(df)
     dim = len(df.columns)
-    if dim == 2:
+    if dim == 2 and plot:
         scatter_2D(df, kmeds.labels_)
-    elif dim == 3:
+    elif dim == 3 and plot:
         scatter_3D(df, kmeds.labels_)
+    return kmeds.labels_
 
 
 def elbow_plot(df, iterations, method: str):
@@ -269,17 +271,21 @@ def optimal_k(df, iterations, method: str):
 
 df = preprocess_data(raw)
 non_cat_df = remove_categorical(df)
-stand_nums = standardize(non_cat_df)
-stand_gauss_df = concat_features(power_transform(remove_features(non_cat_df, ['Recency'])), stand_nums, ['Recency'])
+stand_nums_df = standardize(non_cat_df)
+stand_gauss_df = concat_features(power_transform(remove_features(non_cat_df, ['Recency'])), stand_nums_df, ['Recency'])
 
-(pca, pca_df) = principal_component_analysis(stand_nums, df['Campaigns_Accepted'], 3, True)
-k_means(pca_df, 4)
-k_medoids(pca_df, 4)
+(pca, pca_df) = principal_component_analysis(stand_nums_df, df['Campaigns_Accepted'], 3, False)
+pca_means_df = pd.DataFrame(k_means(pca_df, 4, False))
+pca_meds_df = pd.DataFrame(k_medoids(pca_df, 4, False))
 
-(lda, lda_df) = linear_discriminant_analysis(stand_gauss_df, df['Campaigns_Accepted'], 3, True)
-k_means(lda_df, 6)
-k_medoids(lda_df, 5)
 
-(t_SNE, t_SNE_df) = t_SNE(stand_nums, df['Campaigns_Accepted'], 3, True)
-k_means(t_SNE_df, 5)
-k_medoids(t_SNE_df, 7)
+(lda, lda_df) = linear_discriminant_analysis(stand_gauss_df, df['Campaigns_Accepted'], 3, False)
+lda_means_df = pd.DataFrame(k_means(lda_df, 6, False))
+lda_meds_df = pd.DataFrame(k_medoids(lda_df, 5, False))
+
+(t_SNE, t_SNE_df) = t_SNE(stand_nums_df, df['Campaigns_Accepted'], 3, False)
+t_SNE_means_df = pd.DataFrame(k_means(t_SNE_df, 5, False))
+t_SNE_meds_df = pd.DataFrame(k_medoids(t_SNE_df, 7, False))
+
+stand_nums_df['pca_kmean_cats'] = pca_means_df
+print(stand_nums_df)

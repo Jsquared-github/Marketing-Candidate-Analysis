@@ -136,7 +136,7 @@ def linear_discriminant_analysis(df, target, components, plot: bool):
     return (lda, lda_df)
 
 
-def t_SNE(df, target, components, plot: bool):
+def tSNE(df, target, components, plot: bool):
     t_SNE = TSNE(n_components=components, perplexity=47.5, n_iter=1750, random_state=39)
     t_SNE_df = pd.DataFrame(t_SNE.fit_transform(df))
     if components == 2 and plot:
@@ -275,17 +275,17 @@ stand_nums_df = standardize(non_cat_df)
 stand_gauss_df = concat_features(power_transform(remove_features(non_cat_df, ['Recency'])), stand_nums_df, ['Recency'])
 
 (pca, pca_df) = principal_component_analysis(stand_nums_df, df['Campaigns_Accepted'], 3, False)
-pca_means_df = pd.DataFrame(k_means(pca_df, 4, False))
-pca_meds_df = pd.DataFrame(k_medoids(pca_df, 4, False))
-
+stand_nums_df['pca_kmean_cats'] = pd.DataFrame(k_means(pca_df, 4, False))
+stand_nums_df['pca_kmed_cats'] = pd.DataFrame(k_medoids(pca_df, 4, False))
 
 (lda, lda_df) = linear_discriminant_analysis(stand_gauss_df, df['Campaigns_Accepted'], 3, False)
-lda_means_df = pd.DataFrame(k_means(lda_df, 6, False))
-lda_meds_df = pd.DataFrame(k_medoids(lda_df, 5, False))
+stand_gauss_df['lda_kmean_cats'] = pd.DataFrame(k_means(lda_df, 6, False))
+stand_gauss_df['lda_kmed_cats'] = pd.DataFrame(k_medoids(lda_df, 5, False))
 
-(t_SNE, t_SNE_df) = t_SNE(stand_nums_df, df['Campaigns_Accepted'], 3, False)
-t_SNE_means_df = pd.DataFrame(k_means(t_SNE_df, 5, False))
-t_SNE_meds_df = pd.DataFrame(k_medoids(t_SNE_df, 7, False))
+(tSNE, tSNE_df) = tSNE(stand_nums_df, df['Campaigns_Accepted'], 3, False)
+stand_nums_df['tSNE_kmean_cats'] = pd.DataFrame(k_means(tSNE_df, 5, False))
+stand_nums_df['tSNE_kmed_cats'] = pd.DataFrame(k_medoids(tSNE_df, 7, False))
 
-stand_nums_df['pca_kmean_cats'] = pca_means_df
+
 print(stand_nums_df)
+print(stand_gauss_df)

@@ -11,9 +11,8 @@ from sklearn.decomposition import PCA
 from sklearn_extra.cluster import KMedoids
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
-raw = pd.read_csv('Data\marketing_data.csv', delimiter='\t')
 
-# Functions to Processes Data
+# Functions to clean data
 
 
 def impute_missing_data(df):
@@ -146,6 +145,26 @@ def tSNE(df, target, components, plot: bool):
     return (t_SNE, t_SNE_df)
 
 
+def k_means(df, clusters, plot: bool):
+    kmeans = cluster.KMeans(n_clusters=clusters, random_state=39, n_init='auto').fit(df)
+    dim = len(df.columns)
+    if dim == 2 and plot:
+        scatter_2D(df, kmeans.labels_)
+    elif dim == 3 and plot:
+        scatter_3D(df, kmeans.labels_)
+    return kmeans.labels_
+
+
+def k_medoids(df, clusters, plot: bool):
+    kmeds = KMedoids(n_clusters=clusters, init='random', random_state=39).fit(df)
+    dim = len(df.columns)
+    if dim == 2 and plot:
+        scatter_2D(df, kmeds.labels_)
+    elif dim == 3 and plot:
+        scatter_3D(df, kmeds.labels_)
+    return kmeds.labels_
+
+
 def histogram(df):
     df.hist()
     plt.show()
@@ -187,6 +206,9 @@ def scatter_3D(df, target):
     plt.show()
 
 
+# Methods to Evaluate Transformations
+
+
 def scree_plot(pca):
     per_var = np.round(pca.explained_variance_ratio_ * 100, decimals=2)
     labels = ['PC' + str(x) for x in range(1, len(per_var) + 1)]
@@ -204,26 +226,6 @@ def pca_eigen_vectors(pca_df, pca):
 
 def pca_eigen_values(pca):
     return pca.explained_variance_
-
-
-def k_means(df, clusters, plot: bool):
-    kmeans = cluster.KMeans(n_clusters=clusters, random_state=39, n_init='auto').fit(df)
-    dim = len(df.columns)
-    if dim == 2 and plot:
-        scatter_2D(df, kmeans.labels_)
-    elif dim == 3 and plot:
-        scatter_3D(df, kmeans.labels_)
-    return kmeans.labels_
-
-
-def k_medoids(df, clusters, plot: bool):
-    kmeds = KMedoids(n_clusters=clusters, init='random', random_state=39).fit(df)
-    dim = len(df.columns)
-    if dim == 2 and plot:
-        scatter_2D(df, kmeds.labels_)
-    elif dim == 3 and plot:
-        scatter_3D(df, kmeds.labels_)
-    return kmeds.labels_
 
 
 def elbow_plot(df, iterations, method: str):
@@ -269,10 +271,23 @@ def optimal_k(df, iterations, method: str):
     plt.show()
 
 
+def final_feature_plot(idx_df, series, val_df, title):
+    final_df = pd.DataFrame()
+    for c in np.unique(series):
+        cluster_df = val_df.iloc[np.where(series == c)].mean()
+        final_df[f'{c+1}'] = cluster_df
+    print(final_df)
+    final_df.T.plot.bar(subplots=True, layout=(4, 4), legend=False, rot=0)
+    plt.suptitle(title)
+    plt.show()
+
+
+raw = pd.read_csv('Data\marketing_data.csv', delimiter='\t')
 df = preprocess_data(raw)
 non_cat_df = remove_categorical(df)
 stand_nums_df = standardize(non_cat_df)
 stand_gauss_df = concat_features(power_transform(remove_features(non_cat_df, ['Recency'])), stand_nums_df, ['Recency'])
+non_cat_df['Campaigns_Accepted'] = df['Campaigns_Accepted']
 
 (pca, pca_df) = principal_component_analysis(stand_nums_df, df['Campaigns_Accepted'], 3, False)
 stand_nums_df['pca_kmean_cats'] = pd.DataFrame(k_means(pca_df, 4, False))
@@ -282,10 +297,13 @@ stand_nums_df['pca_kmed_cats'] = pd.DataFrame(k_medoids(pca_df, 4, False))
 stand_gauss_df['lda_kmean_cats'] = pd.DataFrame(k_means(lda_df, 6, False))
 stand_gauss_df['lda_kmed_cats'] = pd.DataFrame(k_medoids(lda_df, 5, False))
 
-(tSNE, tSNE_df) = tSNE(stand_nums_df, df['Campaigns_Accepted'], 3, False)
-stand_nums_df['tSNE_kmean_cats'] = pd.DataFrame(k_means(tSNE_df, 5, False))
-stand_nums_df['tSNE_kmed_cats'] = pd.DataFrame(k_medoids(tSNE_df, 7, False))
+# (tSNE, tSNE_df) = tSNE(stand_nums_df, df['Campaigns_Accepted'], 3, False)
+# stand_nums_df['tSNE_kmean_cats'] = pd.DataFrame(k_means(tSNE_df, 5, False))
+# stand_nums_df['tSNE_kmed_cats'] = pd.DataFrame(k_medoids(tSNE_df, 7, False))
 
-
-print(stand_nums_df)
-print(stand_gauss_df)
+final_feature_plot(stand_nums_df, stand_nums_df['pca_kmean_cats'], non_cat_df, title='PCA K-Means')
+final_feature_plot(stand_nums_df, stand_nums_df['pca_kmed_cats'], non_cat_df, title='PCA K-Medoids')
+final_feature_plot(stand_nums_df, stand_gauss_df['lda_kmean_cats'], non_cat_df, title='LDA K-Medoids')
+final_feature_plot(stand_nums_df, stand_gauss_df['lda_kmed_cats'], non_cat_df, title='LDA K-Medoids')
+# final_feature_plot(stand_nums_df, stand_nums_df['tSNE_kmean_cats'], non_cat_df, title='tSNE K-Medoids')
+# final_feature_plot(stand_nums_df, stand_nums_df['tSNE_kmed_cats'], non_cat_df, title='tSNE K-Medoids')

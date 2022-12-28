@@ -276,7 +276,6 @@ def final_feature_plot(idx_df, series, val_df, title):
     for c in np.unique(series):
         cluster_df = val_df.iloc[np.where(series == c)].mean()
         final_df[f'{c+1}'] = cluster_df
-    print(final_df)
     final_df.T.plot.bar(subplots=True, layout=(4, 4), legend=False, rot=0)
     plt.suptitle(title)
     plt.show()

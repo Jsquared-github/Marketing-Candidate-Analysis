@@ -2,22 +2,19 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from datetime import datetime, date
 from sklearn import cluster, preprocessing
 from sklearn.metrics import silhouette_score
 from sklearn.manifold import TSNE
-from sklearn.impute import SimpleImputer
 from sklearn.decomposition import PCA
 from sklearn_extra.cluster import KMedoids
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
-# Functions to clean data
+# Functions to clean/ process data
 
 
 def impute_missing_data(df):
-    mean_imputer = SimpleImputer(missing_values=pd.NA, strategy='mean')
-    df.Income = mean_imputer.fit_transform(df[['Income']])
+    df.Income.fillna(df.Income.mean(), inplace=True)
 
 
 def remove_outliers(df, feature):

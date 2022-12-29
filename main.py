@@ -143,7 +143,7 @@ def tSNE(df, target, components, plot: bool):
 
 
 def k_means(df, clusters, plot: bool):
-    kmeans = cluster.KMeans(n_clusters=clusters, random_state=39, n_init='auto').fit(df)
+    kmeans = cluster.KMeans(n_clusters=clusters, random_state=39, n_init=10).fit(df)
     dim = len(df.columns)
     if dim == 2 and plot:
         scatter_2D(df, kmeans.labels_)
@@ -230,7 +230,7 @@ def elbow_plot(df, iterations, method: str):
     ks = []
     if method == 'kmeans':
         for k in range(2, iterations + 1):
-            kmeans = cluster.KMeans(n_clusters=k, random_state=39, n_init='auto').fit(df)
+            kmeans = cluster.KMeans(n_clusters=k, random_state=39, n_init=10).fit(df)
             SSE.append(kmeans.inertia_)
             ks.append(k)
     elif method == 'kmedoids':
@@ -246,7 +246,7 @@ def silhouette_plot(df, iterations, method: str):
     ks = []
     if method == 'kmeans':
         for k in range(2, iterations + 1):
-            kmeans = cluster.KMeans(n_clusters=k, random_state=39, n_init='auto').fit(df)
+            kmeans = cluster.KMeans(n_clusters=k, random_state=39, n_init=10).fit(df)
             sils.append(silhouette_score(df, kmeans.labels_))
             ks.append(k)
     elif method == 'kmedoids':
@@ -270,6 +270,7 @@ def optimal_k(df, iterations, method: str):
 
 def final_feature_plot(idx_df, series, val_df, title):
     final_df = pd.DataFrame()
+    fig = plt.figure(figsize=(7, 7))
     for c in np.unique(series):
         cluster_df = val_df.iloc[np.where(series == c)].mean()
         final_df[f'{c+1}'] = cluster_df
@@ -300,7 +301,7 @@ stand_nums_df['tSNE_kmed_cats'] = pd.DataFrame(k_medoids(tSNE_df, 7, False))
 
 final_feature_plot(stand_nums_df, stand_nums_df['pca_kmean_cats'], non_cat_df, title='PCA K-Means')
 final_feature_plot(stand_nums_df, stand_nums_df['pca_kmed_cats'], non_cat_df, title='PCA K-Medoids')
-final_feature_plot(stand_nums_df, stand_gauss_df['lda_kmean_cats'], non_cat_df, title='LDA K-Medoids')
+final_feature_plot(stand_nums_df, stand_gauss_df['lda_kmean_cats'], non_cat_df, title='LDA K-Means')
 final_feature_plot(stand_nums_df, stand_gauss_df['lda_kmed_cats'], non_cat_df, title='LDA K-Medoids')
-final_feature_plot(stand_nums_df, stand_nums_df['tSNE_kmean_cats'], non_cat_df, title='tSNE K-Medoids')
+final_feature_plot(stand_nums_df, stand_nums_df['tSNE_kmean_cats'], non_cat_df, title='tSNE K-Means')
 final_feature_plot(stand_nums_df, stand_nums_df['tSNE_kmed_cats'], non_cat_df, title='tSNE K-Medoids')

@@ -12,17 +12,16 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 # Functions to clean/ process data
 
-
 def impute_missing_data(df):
     df.Income.fillna(df.Income.mean(), inplace=True)
 
 
 def remove_outliers(df, feature):
-    Q1 = df[feature].describe()[6]
-    Q3 = df[feature].describe()[4]
-    IQR = Q1 - Q3
-    df.drop(df[(df[feature] < (Q1 - 1.75 * IQR))].index, inplace=True)
-    df.drop(df[(df[feature] > (Q3 + 1.75 * IQR))].index, inplace=True)
+    Q3 = df[feature].describe()[6]
+    Q1 = df[feature].describe()[4]
+    IQR = Q3 - Q1
+    df.drop(df[(df[feature] < (Q1 - 1.5 * IQR))].index, inplace=True)
+    df.drop(df[(df[feature] > (Q3 + 1.5 * IQR))].index, inplace=True)
 
 
 def transform_age(df):
@@ -64,11 +63,17 @@ def drop_redundants(df):
 
 
 def preprocess_data(df):
-    impute_missing_data(df)
-    remove_outliers(df, 'Income')
-    remove_outliers(df, 'Year_Birth')
     transform_age(df)
     trasform_education(df)
+    remove_outliers(df, 'Income')
+    remove_outliers(df, 'Year_Birth')
+    remove_outliers(df, 'MntFishProducts')
+    remove_outliers(df, 'MntMeatProducts')
+    remove_outliers(df, 'MntGoldProds')
+    remove_outliers(df, 'MntSweetProducts')
+    remove_outliers(df, 'MntWines')
+    remove_outliers(df, 'MntFruits')
+    impute_missing_data(df)
     combine_campaigns(df)
     get_family_size(df)
     drop_redundants(df)
@@ -205,7 +210,6 @@ def scatter_3D(df, target):
 
 # Methods to Evaluate Transformations
 
-
 def scree_plot(pca):
     per_var = np.round(pca.explained_variance_ratio_ * 100, decimals=2)
     labels = ['PC' + str(x) for x in range(1, len(per_var) + 1)]
@@ -270,11 +274,10 @@ def optimal_k(df, iterations, method: str):
 
 def final_feature_plot(idx_df, series, val_df, title):
     final_df = pd.DataFrame()
-    fig = plt.figure(figsize=(7, 7))
     for c in np.unique(series):
         cluster_df = val_df.iloc[np.where(series == c)].mean()
         final_df[f'{c+1}'] = cluster_df
-    final_df.T.plot.bar(subplots=True, layout=(4, 4), legend=False, rot=0)
+    final_df.T.plot.bar(subplots=True, layout=(4, 5), legend=False, rot=0)
     plt.suptitle(title)
     plt.show()
 
@@ -298,6 +301,7 @@ stand_gauss_df['lda_kmed_cats'] = pd.DataFrame(k_medoids(lda_df, 5, False))
 (tSNE, tSNE_df) = tSNE(stand_nums_df, df['Campaigns_Accepted'], 3, False)
 stand_nums_df['tSNE_kmean_cats'] = pd.DataFrame(k_means(tSNE_df, 5, False))
 stand_nums_df['tSNE_kmed_cats'] = pd.DataFrame(k_medoids(tSNE_df, 7, False))
+
 
 final_feature_plot(stand_nums_df, stand_nums_df['pca_kmean_cats'], non_cat_df, title='PCA K-Means')
 final_feature_plot(stand_nums_df, stand_nums_df['pca_kmed_cats'], non_cat_df, title='PCA K-Medoids')

@@ -1,4 +1,4 @@
-# Ideal-Marketing-Candidate-Finder
+# Marketing-Data-Analysis
 
 If you want to see the Kaggle Notebook I made from this code, it can be found here: https://www.kaggle.com/code/jsquared02/marketing-data-analysis-clustering
 

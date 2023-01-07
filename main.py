@@ -291,16 +291,16 @@ non_cat_df = pd.concat(objs=[non_cat_df, df['Campaigns_Accepted']], copy=False, 
 
 
 (pca, pca_df) = principal_component_analysis(stand_nums_df, df['Campaigns_Accepted'], 3, False)
-stand_nums_df['pca_kmean_cats'] = pd.DataFrame(k_means(pca_df, 4, False))
-stand_nums_df['pca_kmed_cats'] = pd.DataFrame(k_medoids(pca_df, 4, False))
+stand_nums_df['pca_kmean_cats'] = pd.DataFrame(k_means(pca_df, 4, plot=True))
+stand_nums_df['pca_kmed_cats'] = pd.DataFrame(k_medoids(pca_df, 5, plot=True))
 
 (lda, lda_df) = linear_discriminant_analysis(stand_gauss_df, df['Campaigns_Accepted'], 3, False)
-stand_gauss_df['lda_kmean_cats'] = pd.DataFrame(k_means(lda_df, 6, False))
-stand_gauss_df['lda_kmed_cats'] = pd.DataFrame(k_medoids(lda_df, 5, False))
+stand_gauss_df['lda_kmean_cats'] = pd.DataFrame(k_means(lda_df, 4, plot=True))
+stand_gauss_df['lda_kmed_cats'] = pd.DataFrame(k_medoids(lda_df, 5, plot=True))
 
 (tSNE, tSNE_df) = tSNE(stand_nums_df, df['Campaigns_Accepted'], 3, False)
-stand_nums_df['tSNE_kmean_cats'] = pd.DataFrame(k_means(tSNE_df, 5, False))
-stand_nums_df['tSNE_kmed_cats'] = pd.DataFrame(k_medoids(tSNE_df, 7, False))
+stand_nums_df['tSNE_kmean_cats'] = pd.DataFrame(k_means(tSNE_df, 5, plot=True))
+stand_nums_df['tSNE_kmed_cats'] = pd.DataFrame(k_medoids(tSNE_df, 7, plot=True))
 
 
 final_feature_plot(stand_nums_df, stand_nums_df['pca_kmean_cats'], non_cat_df, title='PCA K-Means')
